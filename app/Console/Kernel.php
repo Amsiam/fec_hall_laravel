@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -18,6 +19,16 @@ class Kernel extends ConsoleKernel
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
+
+    /**
+ * Get the timezone that should be used by default for scheduled events.
+ *
+ * @return \DateTimeZone|string|null
+ */
+    protected function scheduleTimezone()
+    {
+        return 'Asia/Dhaka';
+    }
     protected function schedule(Schedule $schedule)
     {
         $schedule->call(function () {
@@ -27,8 +38,11 @@ class Kernel extends ConsoleKernel
                 $daily_meals = DailyMeal::all();
 
                 $arr = [];
+                
                 foreach ($daily_meals as $daily_meal) {
-                    array_push($arr, ["user_id" => $daily_meal->user_id, "meal_status" => $daily_meal->meal_status, "date" => date("Y-m-d", strtotime("+1 day"))]);
+                    $meal = 1;
+                if($daily_meal->meal_status == 1 && $daily_meal->manager_status==1)$meal = 0;
+                    array_push($arr, ["user_id" => $daily_meal->user_id, "meal_status" => $meal, "date" => date("Y-m-d", strtotime("+1 day"))]);
                 }
 
                 DB::beginTransaction();
@@ -51,10 +65,13 @@ class Kernel extends ConsoleKernel
                     Meal::insert($arr);
                 } catch (Exception $e) {
                     DB::rollBack();
+                    Log::error($e);
                 }
                 DB::commit();
             }
-        })->dailyAt("22:00");
+        })->dailyAt("23:00");
+
+
     }
 
     /**

@@ -29,6 +29,7 @@ Route::prefix("user")->group(function () {
 
 Route::middleware("auth:api")->group(function () {
     Route::get("/user/me", [AuthController::class, "me"]);
+    Route::post("/user/toggle_manager", [AuthController::class, "toggleManager"]);
     Route::post("/user/logout", [AuthController::class, "logout"]);
 
 

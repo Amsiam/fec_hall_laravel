@@ -50,10 +50,11 @@ class DailyMealController extends Controller
 
         $request->validate([
             'status' => 'required|integer',
+            'user_id'=>'required|integer',
         ]);
 
         DailyMeal::updateOrCreate([
-            'user_id'   => auth("api")->user()->id,
+            'user_id'   => $request->user_id,
         ], [
             'manager_status' => $request->status
         ]);

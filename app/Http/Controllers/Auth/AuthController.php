@@ -33,6 +33,14 @@ class AuthController extends Controller
             ], 200);
         }
 
+        if(substr($request->room_no, -2)>10){
+            return response()->json([
+                'status' => 'fail',
+                'message' => 'Room no not allowed.',
+                'errors' => $data->errors()
+            ], 200);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -106,6 +114,33 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'user' => auth("api")->user(),
+        ], 200);
+    }
+
+    public function toggleManager(Request $request)
+    {
+
+        if (auth("api")->user()->user_role != 0) {
+            return response()->json([
+                'status' => 'fail',
+                'message' => 'You are not allowed to access the page',
+                "data" => false
+            ], 200);
+        }
+
+        $request->validate([
+            'status' => 'required|integer',
+            'user_id'=>'required|integer',
+        ]);
+
+        User::where(
+            'id', $request->user_id)->update([
+            'user_role' => $request->status
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $request->status==1 ? "Marked as Manager successfully" : "Remove from manager successfully"
         ], 200);
     }
 }

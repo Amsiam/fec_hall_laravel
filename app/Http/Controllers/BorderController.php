@@ -18,7 +18,11 @@ class BorderController extends Controller
             ], 200);
         }
 
-        $users = User::whereNot('user_role', 0)->orderBy("border_no")->get();
+        $users = User::whereNot('user_role', 0)
+        ->join("daily_meals","users.id","=","daily_meals.user_id")
+        ->select("users.*","daily_meals.manager_status as manager_status")
+        ->orderByRaw('CONVERT(border_no, SIGNED)')
+        ->get();
 
         return response()->json([
             'status' => 'success',

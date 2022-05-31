@@ -41,7 +41,7 @@ class MealController extends Controller
             ->where("meal_status", 0)
             ->join("users", "users.id", "=", "meals.user_id")
             ->select("users.name as name", "users.room_no as room_no", "users.border_no as border_no")
-            ->orderBy("users.border_no")
+             ->orderByRaw('CONVERT(users.border_no, SIGNED)')
             ->get();
 
         return response()->json([
