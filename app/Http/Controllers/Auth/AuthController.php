@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
@@ -33,7 +34,7 @@ class AuthController extends Controller
             ], 200);
         }
 
-        if(substr($request->room_no, -2)>10){
+        if (substr($request->room_no, -2) > 10) {
             return response()->json([
                 'status' => 'fail',
                 'message' => 'Room no not allowed.',
@@ -130,17 +131,89 @@ class AuthController extends Controller
 
         $request->validate([
             'status' => 'required|integer',
-            'user_id'=>'required|integer',
+            'user_id' => 'required|integer',
         ]);
 
         User::where(
-            'id', $request->user_id)->update([
+            'id',
+            $request->user_id
+        )->update([
             'user_role' => $request->status
         ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => $request->status==1 ? "Marked as Manager successfully" : "Remove from manager successfully"
+            'message' => $request->status == 1 ? "Marked as Manager successfully" : "Remove from manager successfully"
         ], 200);
+    }
+
+
+    //web
+    public function loginView(Request $request)
+    {
+
+        return Inertia::render('login');
+    }
+
+    public function loginPost(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|string|email|max:255',
+            'password' => 'required|string|min:6'
+        ]);
+
+        if (Auth::attempt($data)) {
+            $request->session()->regenerate();
+            return redirect()->intended();
+        }
+
+        return back()->withErrors(
+            [
+                "email" => "Email not valid or not registerd yet."
+            ]
+        );
+    }
+    public function logoutWeb(Request $request)
+    {
+        Auth::logout();
+        return redirect()->route("login");
+    }
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
+            'room_no' => 'required|string|max:3',
+            'border_no' => 'required|string|max:255'
+        ]);
+
+        if (substr($request->room_no, -2) > 10) {
+            return back()->withErrors(
+                [
+                    "room_no" => "Room no is not valid."
+                ]
+            );
+        }
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'room_no' => $request->room_no,
+            'border_no' => $request->border_no,
+            'user_role' => 2
+        ]);
+
+        DailyMeal::create([
+            'user_id' => $user->id,
+            'meal_status' => 0,
+            'manager_status' => 0
+        ]);
+
+        if (Auth::attempt($data)) {
+            $request->session()->regenerate();
+            return redirect()->intended();
+        }
     }
 }

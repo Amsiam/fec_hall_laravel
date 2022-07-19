@@ -37,6 +37,31 @@ class DailyMealController extends Controller
         ], 200);
     }
 
+    public function toggleWeb(Request $request)
+    {
+        // dd($request->all());
+
+        $request->validate([
+            'meal_status' => 'required|integer',
+        ]);
+
+        $dailyMeal = DailyMeal::where('user_id', auth()->user()->id)->first();
+
+        if ($dailyMeal->manager_status == 0) {
+            return back()->withErrors([
+                'meal_status' => "Your meal cant be changed. Contact Manager."
+            ]);
+        }
+
+        DailyMeal::updateOrCreate([
+            'user_id'   => auth()->user()->id,
+        ], [
+            'meal_status' => $request->meal_status
+        ]);
+
+        return back();
+    }
+
     public function toggleManager(Request $request)
     {
 
@@ -50,7 +75,7 @@ class DailyMealController extends Controller
 
         $request->validate([
             'status' => 'required|integer',
-            'user_id'=>'required|integer',
+            'user_id' => 'required|integer',
         ]);
 
         DailyMeal::updateOrCreate([
